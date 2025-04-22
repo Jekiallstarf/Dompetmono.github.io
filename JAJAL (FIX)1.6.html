@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Perbendaharaan Kerajaan</title>
+  <script>
+    let players = [];
+
+    const colors = [
+      '#FEEBCB', '#D1FAE5', '#DBEAFE', '#FCD34D', '#FCA5A5', '#E9D5FF', '#BFDBFE', '#C4B5FD'
+    ];
+
+    function getCurrentTime() {
+      const now = new Date();
+      return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    function updateDisplay() {
+      const list = document.getElementById("player-list");
+      list.innerHTML = "";
+
+      players.forEach((player, index) => {
+        const item = document.createElement("div");
+        item.className = "border p-4 rounded shadow w-[280px] m-2";
+        item.style.backgroundColor = colors[index % colors.length];
+        const historyHtml = player.history.slice(-5).map(entry => `<div class='text-sm text-gray-600'>${entry}</div>`).join("");
+        item.innerHTML = `
+          <strong>Nama:</strong> ${player.name}<br>
+          <strong>Saldo:</strong> <span id="balance-${index}">${player.balance}</span> koin <br>
+          <input type="number" id="custom-${index}" placeholder="Nominal" style="width: 80px;">
+          <button onclick="adjustCustom(${index}, true)">+ Tambah</button>
+          <button onclick="adjustCustom(${index}, false)">- Kurangi</button>
+          <br>
+          <button onclick="adjustBalance(${index}, -100, 'Pajak Laut')">Pajak Laut (-100)</button>
+          <button onclick="adjustBalance(${index}, -200, 'Pajak Dagang')">Pajak Dagang (-200)</button>
+          <button onclick="adjustBalance(${index}, 200, 'Hadiah Ekspedisi')">Hadiah Ekspedisi (+200)</button>
+          <div class="mt-2"><em>Riwayat Transaksi:</em>${historyHtml}</div>
+          <button onclick="removePlayer(${index})" style="color: red; margin-top: 10px;">🗑 Hapus Pemain</button>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    function updateLeaderboard() {
+      const leaderboard = document.getElementById("leaderboard-content");
+      const sorted = [...players].sort((a, b) => b.balance - a.balance);
+      leaderboard.innerHTML = `<h2 class='mb-2'>🏆 Leaderboard</h2>` +
+        sorted.map(p => `<div>${p.name}: ${p.balance} koin</div>`).join("");
+    }
+
+    function addPlayer() {
+      const name = prompt("Nama pemain baru?");
+      if (name) {
+        players.push({ name, balance: 1500, history: [] });
+        updateDisplay();
+        updateLeaderboard();
+      }
+    }
+
+    function adjustBalance(index, amount, reason = '') {
+      players[index].balance += amount;
+      const sign = amount > 0 ? '+' : '';
+      const entry = `${getCurrentTime()} - ${sign}${amount} koin ${reason ? `(${reason})` : ''}`;
+      players[index].history.push(entry);
+      updateDisplay();
+      updateLeaderboard();
+    }
+
+    function adjustCustom(index, isAdd) {
+      const input = document.getElementById(`custom-${index}`);
+      let value = parseInt(input.value);
+      if (!isNaN(value)) {
+        if (!isAdd) value *= -1;
+        adjustBalance(index, value, isAdd ? 'Penyesuaian Tambah' : 'Penyesuaian Kurang');
+      }
+    }
+
+    function removePlayer(index) {
+      if (confirm(`Hapus pemain ${players[index].name}?`)) {
+        players.splice(index, 1);
+        updateDisplay();
+        updateLeaderboard();
+      }
+    }
+
+    function toggleLeaderboard() {
+      const box = document.getElementById("leaderboard-box");
+      box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    }
+  </script>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f0f4f8;
+      padding: 2rem;
+    }
+    button {
+      margin: 2px;
+      padding: 0.25rem 0.5rem;
+    }
+    input[type="number"] {
+      padding: 0.2rem;
+      margin-right: 5px;
+    }
+    .text-sm {
+      font-size: 0.85rem;
+    }
+    .text-gray-600 {
+      color: #4b5563;
+    }
+    #player-list {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+    #leaderboard-box {
+      display: none;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+      width: 250px;
+    }
+  </style>
+</head>
+<body>
+  <h1>💰 Perbendaharaan Kerajaan</h1>
+  <button onclick="addPlayer()">➕ Tambah Pemain</button>
+  <button onclick="toggleLeaderboard()">📊 Tampilkan Leaderboard</button>
+  <div id="player-list" class="mt-4"></div>
+  <div id="leaderboard-box">
+    <div id="leaderboard-content"></div>
+  </div>
+</body>
+</html>
